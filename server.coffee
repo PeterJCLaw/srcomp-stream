@@ -8,7 +8,8 @@ console.log('Using', configuration)
 
 comp = new srcomp.SRComp(configuration.SRCOMP)
 
-comp.events.onValue (event) ->
-  console.log JSON.stringify(event, null, 2) if configuration.DEBUG
+if configuration.DEBUG
+  comp.events.onValue (event) ->
+    console.log JSON.stringify(event, null, 2)
 
 sse(comp).listen(configuration.WEB_PORT, '::')
