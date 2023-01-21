@@ -1,3 +1,5 @@
 module.exports =
   SRCOMP: "https://www.studentrobotics.org/comp-api"
   WEB_PORT: 5001
+  # DEBUG causes all events to also be printed to stdout
+  DEBUG: true
