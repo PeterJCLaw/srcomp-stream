@@ -27,6 +27,7 @@ class SRComp
     @currentMatch = []
     @currentStagingMatches = []
     @currentShepherdingMatches = []
+    @lastReleasedMatch = null
     @lastScoredMatch = null
     @koRounds = null
     @tiebreaker = null
@@ -62,6 +63,7 @@ class SRComp
     console.log "Reloading data"
     do @reloadTeams
     do @reloadMatches
+    do @reloadLastReleasedMatch
     do @reloadLastScoredMatch
     do @reloadKnockouts
     do @reloadTiebreaker
@@ -70,6 +72,7 @@ class SRComp
     @seedTeamRecords().concat(@seedMatchRecord())
                       .concat(@seedCurrentStagingMatchesRecord())
                       .concat(@seedCurrentShepherdingMatchesRecord())
+                      .concat(@seedReleasedMatchRecord())
                       .concat(@seedScoredMatchRecord())
                       .concat(@seedKnockoutsRecord())
                       .concat(@seedDelayRecord())
@@ -91,6 +94,10 @@ class SRComp
 
   seedCurrentShepherdingMatchesRecord: ->
     [{event: 'current-shepherding-matches', data: @currentShepherdingMatches}]
+
+  seedReleasedMatchRecord: ->
+    return [] if not @lastReleasedMatch?
+    [{event: 'last-released-match', data: @lastReleasedMatch}]
 
   seedScoredMatchRecord: ->
     return [] if not @lastScoredMatch?
@@ -128,6 +135,15 @@ class SRComp
       if not _.isEqual(@matches, matches)
         @matches = matches
         do @updateCurrent
+
+  reloadLastReleasedMatch: ->
+    checkedRequest "#{@base}/matches/last_released", (response, body) =>
+      lastReleasedMatch = JSON.parse(body)['last_released']
+      if not _.isEqual(@lastReleasedMatch, lastReleasedMatch)
+        @lastReleasedMatch = lastReleasedMatch
+        @events.push
+          event: 'last-released-match'
+          data: @lastReleasedMatch
 
   reloadLastScoredMatch: ->
     checkedRequest "#{@base}/matches/last_scored", (response, body) =>
