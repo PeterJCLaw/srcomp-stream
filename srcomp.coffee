@@ -29,6 +29,7 @@ class SRComp
     @currentShepherdingMatches = []
     @lastScoredMatch = null
     @koRounds = null
+    @koStructure = null
     @tiebreaker = null
     do @queryConfig
 
@@ -72,6 +73,7 @@ class SRComp
                       .concat(@seedCurrentShepherdingMatchesRecord())
                       .concat(@seedScoredMatchRecord())
                       .concat(@seedKnockoutsRecord())
+                      .concat(@seedKnockoutStructureRecord())
                       .concat(@seedDelayRecord())
                       .concat(@seedTiebreakerRecord())
 
@@ -99,6 +101,10 @@ class SRComp
   seedKnockoutsRecord: ->
     return [] if not @koRounds?
     [{event: 'knockouts', data: @koRounds}]
+
+  seedKnockoutStructureRecord: ->
+    return [] if not @koStructure?
+    [{event: 'knockout-structure', data: @koStructure}]
 
   seedTiebreakerRecord: ->
     return [] if not @tiebreaker?
@@ -176,12 +182,23 @@ class SRComp
 
   reloadKnockouts: ->
     checkedRequest "#{@base}/knockout", (response, body) =>
-      newKORounds = JSON.parse(body)['rounds']
+      parsedBody = JSON.parse(body)
+
+      newKORounds = parsedBody['rounds']
       if not _.isEqual(@koRounds, newKORounds)
         @koRounds = newKORounds
         @events.push
           event: 'knockouts'
           data: @koRounds
+
+      # Cope with older APIs not having this value -- in which case we don't
+      # emit this event. Relies on @koStructure defaulting to `null`.
+      newKOStructure = parsedBody['structure'] or null
+      if not _.isEqual(@koStructure, newKOStructure)
+        @koStructure = newKOStructure
+        @events.push
+          event: 'knockout-structure'
+          data: @koStructure
 
   reloadTiebreaker: ->
     rq "#{@base}/tiebreaker", (error, response, body) =>
